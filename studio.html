@@ -45,6 +45,12 @@ window.addEventListener("message", e => {
       .catch(err => app.insertAdjacentHTML("afterbegin", `<p class="warn">TikTok sign-in failed: ${esc(err.message)}</p>`));
   }
 });
+window.addEventListener("storage", e => {               // the sign-in window's fallback (see tiktok-callback.html)
+  if (e.key !== "vh_tiktok_code" || !e.newValue) return;
+  const d = JSON.parse(e.newValue); localStorage.removeItem("vh_tiktok_code");
+  if (Date.now() - d.at < 120000) api("/api/callback", {code: d.tiktok_code, state: d.state}).then(load)
+    .catch(err => app.insertAdjacentHTML("afterbegin", `<p class="warn">TikTok sign-in failed: ${esc(err.message)}</p>`));
+});
 function connect() {
   ready = new Promise(r => readyNow = r);
   bridge = window.open(LOCAL + "/bridge", "vhbridge", "width=440,height=240");

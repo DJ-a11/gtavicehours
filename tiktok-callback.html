@@ -13,13 +13,14 @@
   const q = new URLSearchParams(location.search), msg = document.getElementById("msg");
   history.replaceState(null, "", location.pathname);       // the code is single-use; keep it out of history
   if (q.get("error")) { msg.textContent = "TikTok sign-in was cancelled or failed: " + (q.get("error_description") || q.get("error")); return; }
+  const hand = {tiktok_code: q.get("code"), state: q.get("state"), at: Date.now()};
   if (window.opener && !window.opener.closed) {             // hand the code to the studio, which passes it to the tool
-    window.opener.postMessage({tiktok_code: q.get("code"), state: q.get("state")}, location.origin);
-    msg.textContent = "Signed in. You can close this window.";
-    setTimeout(() => window.close(), 800);
-  } else {
-    msg.textContent = "Open the TikTok studio and sign in from there.";
+    window.opener.postMessage(hand, location.origin);
+  } else {                                                  // TikTok's page may cut the link to the studio: same-site storage
+    try { localStorage.setItem("vh_tiktok_code", JSON.stringify(hand)); } catch (e) {}
   }
+  msg.textContent = "Signed in. You can close this window.";
+  setTimeout(() => window.close(), 800);
 })();
 </script>
 </body></html>
