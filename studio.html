@@ -65,7 +65,9 @@ function api(path, body, binary) {
   });
 }
 function start() {
-  app.innerHTML = `<p>Connect this page to the GTA Vice Hours tool on this computer. A small window opens; keep it open.</p>
+  const signingIn = !!localStorage.getItem("vh_tiktok_code");
+  app.innerHTML = `${signingIn ? "<p><strong>Back from TikTok.</strong> Reconnect to the tool to finish signing in.</p>" : ""}
+    <p>Connect this page to the GTA Vice Hours tool on this computer. A small window opens; keep it open.</p>
     <button class="btn" id="connect">Connect to the tool</button>`;
   document.getElementById("connect").onclick = async () => {
     try { await connect(); load(); }
@@ -74,15 +76,20 @@ function start() {
 }
 async function load() {
   let s;
+  const back = (() => { try { return JSON.parse(localStorage.getItem("vh_tiktok_code") || "null"); } catch (e) { return null; } })();
+  if (back) {                                  // just back from TikTok sign-in (tiktok-callback.html): finish it
+    localStorage.removeItem("vh_tiktok_code");
+    if (Date.now() - back.at < 300000) {
+      try { await api("/api/callback", {code: back.tiktok_code, state: back.state}); }
+      catch (e) { app.innerHTML = `<p class="warn">TikTok sign-in failed: ${esc(e.message)}</p>`; return; }
+    }
+  }
   try { s = await api("/api/status"); }
   catch (e) { return start(); }
   if (!s.connected) {
     app.innerHTML = `<p>Sign in with the TikTok account the clips should be posted to.</p>
       <button class="btn" id="login">Continue with TikTok</button>`;
-    document.getElementById("login").onclick = async () => {
-      const w = window.open("about:blank", "tiktokauth", "width=520,height=760");
-      w.location = (await api("/api/auth_url")).url;
-    };
+    document.getElementById("login").onclick = async () => { location.href = (await api("/api/auth_url")).url; };
     return;
   }
   const c = s.creator;
