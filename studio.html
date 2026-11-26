@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TikTok studio</title><link rel="stylesheet" href="style.css">
+<style>
+.card{border:1px solid var(--line);border-radius:12px;padding:16px;margin:16px 0;display:grid;grid-template-columns:180px 1fr;gap:16px}
+@media (max-width:620px){.card{grid-template-columns:1fr}}
+video{width:180px;max-width:100%;aspect-ratio:9/16;background:#000;border-radius:8px}
+label{display:block;font-weight:600;margin:10px 0 4px}
+textarea,select{width:100%;font:inherit;padding:8px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--fg)}
+textarea{min-height:90px}
+.row{display:flex;gap:16px;flex-wrap:wrap}.row label{font-weight:400;display:flex;gap:6px;align-items:center;margin:4px 0}
+.btn{font:inherit;font-weight:600;border:0;border-radius:8px;padding:10px 18px;cursor:pointer;background:#fe2c55;color:#fff}
+.btn[disabled]{opacity:.45;cursor:not-allowed}.btn.ghost{background:transparent;color:var(--muted);border:1px solid var(--line)}
+.who{display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin:12px 0}
+.who img{width:40px;height:40px;border-radius:50%}
+.note{font-size:14px;color:var(--muted)}.warn{color:var(--accent);font-size:14px}
+.sub{margin-left:24px}
+</style></head>
+<body>
+<header><a class="brand" href="./">GTA Vice Hours Uploader</a>
+<nav><a href="studio.html">TikTok studio</a><a href="privacy.html">Privacy Policy</a><a href="terms.html">Terms of Service</a></nav></header>
+<main>
+<h1>TikTok studio</h1>
+<p class="muted">Review each clip, choose who can see it, and post it to TikTok. Nothing is posted until you press
+Post. This page talks to the GTA Vice Hours tool running on the owner's computer.</p>
+<div id="app"><p class="note">Loading…</p></div>
+</main>
+<footer><a href="./">Home</a><a href="privacy.html">Privacy Policy</a><a href="terms.html">Terms of Service</a></footer>
+<script>
+const LOCAL = "http://127.0.0.1:8765";
+const PRIV = {PUBLIC_TO_EVERYONE: "Everyone", MUTUAL_FOLLOW_FRIENDS: "Friends", FOLLOWER_OF_CREATOR: "Followers", SELF_ONLY: "Only me"};
+const app = document.getElementById("app");
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+async function api(path, body) {
+  const r = await fetch(LOCAL + path, body ? {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(body)} : {});
+  const j = await r.json(); if (!r.ok) throw new Error(j.error || r.statusText); return j;
+}
+async function load() {
+  let s;
+  try { s = await api("/api/status"); }
+  catch (e) { app.innerHTML = `<p class="warn">The GTA Vice Hours tool is not running on this computer, so there is nothing to post.</p>`; return; }
+  if (!s.connected) {
+    app.innerHTML = `<p>Sign in with the TikTok account the clips should be posted to.</p>
+      <button class="btn" id="login">Continue with TikTok</button>`;
+    document.getElementById("login").onclick = async () => { location.href = (await api("/api/auth_url")).url; };
+    return;
+  }
+  const c = s.creator;
+  let h = `<div class="who"><img src="${esc(c.creator_avatar_url)}" alt=""><div><strong>${esc(c.creator_nickname)}</strong>
+    <div class="note">Posting to @${esc(c.creator_username)}</div></div>
+    <button class="btn ghost" id="logout" style="margin-left:auto">Disconnect</button></div>`;
+  if (c.can_post === false) h += `<p class="warn">TikTok says this account can't post right now. Try again later.</p>`;
+  if (!s.queue.length) h += `<p class="note">No clips are waiting. New clips appear here when they are ready.</p>`;
+  for (const q of s.queue) {
+    const tooLong = c.max_video_post_duration_sec && q.duration > c.max_video_post_duration_sec;
+    h += `<div class="card" data-id="${esc(q.id)}">
+      <video src="${LOCAL}/clip/${encodeURIComponent(q.id)}.mp4" controls playsinline preload="metadata"></video>
+      <div>
+        <label>Caption</label><textarea maxlength="2200" class="cap">${esc(q.caption)}</textarea>
+        <label>Who can view this video</label>
+        <select class="priv"><option value="" selected disabled>Select…</option>
+          ${c.privacy_level_options.map(o => `<option value="${o}">${PRIV[o] || o}</option>`).join("")}</select>
+        <label>Allow users to</label>
+        <div class="row">
+          <label><input type="checkbox" class="cmt" ${c.comment_disabled ? "disabled" : ""}> Comment</label>
+          <label><input type="checkbox" class="duet" ${c.duet_disabled ? "disabled" : ""}> Duet</label>
+          <label><input type="checkbox" class="stitch" ${c.stitch_disabled ? "disabled" : ""}> Stitch</label>
+        </div>
+        <label><input type="checkbox" class="cc"> Disclose video content</label>
+        <div class="note">Turn this on if this video promotes yourself, a brand, product or service.
+          ${q.paid ? "<strong>This clip is paid for by a clipping campaign.</strong>" : ""}</div>
+        <div class="sub ccopts" hidden>
+          <label><input type="checkbox" class="yours"> Your brand <span class="note">(promoting yourself or your own business)</span></label>
+          <label><input type="checkbox" class="branded"> Branded content <span class="note">(promoting another brand or a third party)</span></label>
+          <div class="note cclabel"></div>
+        </div>
+        <p class="note consent"></p>
+        ${tooLong ? `<p class="warn">This clip is longer than TikTok allows for this account.</p>` : ""}
+        <div class="row"><button class="btn post" disabled>Post</button><button class="btn ghost skip">Skip</button></div>
+        <p class="note result"></p>
+      </div></div>`;
+  }
+  app.innerHTML = h;
+  document.getElementById("logout").onclick = async () => { await api("/api/logout", {}); load(); };
+  document.querySelectorAll(".card").forEach(card => wire(card, c));
+}
+function wire(card, c) {
+  const $ = s => card.querySelector(s);
+  const update = () => {
+    const cc = $(".cc").checked, yours = $(".yours").checked, branded = $(".branded").checked;
+    $(".ccopts").hidden = !cc;
+    const priv = $(".priv");
+    const selfOnly = priv.querySelector('option[value="SELF_ONLY"]');
+    if (selfOnly) { selfOnly.disabled = cc && branded; if (cc && branded && priv.value === "SELF_ONLY") priv.value = ""; }
+    $(".cclabel").textContent = !cc ? "" : branded ? 'Your video will be labeled as "Paid partnership".'
+      : yours ? 'Your video will be labeled as "Promotional content".' : "";
+    $(".consent").innerHTML = cc && branded
+      ? 'By posting, you agree to TikTok\'s <a href="https://www.tiktok.com/legal/page/global/bc-policy/en" target="_blank">Branded Content Policy</a> and <a href="https://www.tiktok.com/legal/page/global/music-usage-confirmation/en" target="_blank">Music Usage Confirmation</a>.'
+      : 'By posting, you agree to TikTok\'s <a href="https://www.tiktok.com/legal/page/global/music-usage-confirmation/en" target="_blank">Music Usage Confirmation</a>.';
+    const ok = priv.value && (!cc || yours || branded) && c.can_post !== false;
+    $(".post").disabled = !ok;
+    $(".post").title = cc && !yours && !branded ? "You need to indicate if your content promotes yourself, a third party, or both." : "";
+  };
+  card.querySelectorAll("input,select").forEach(e => e.onchange = update); update();
+  $(".skip").onclick = async () => { await api("/api/skip", {id: card.dataset.id}); card.remove(); };
+  $(".post").onclick = async () => {
+    $(".post").disabled = true; $(".skip").disabled = true;
+    $(".result").textContent = "Posting… it may take a few minutes for the video to process and appear on your profile.";
+    try {
+      const r = await api("/api/post", {id: card.dataset.id, caption: $(".cap").value, privacy_level: $(".priv").value,
+        allow_comment: $(".cmt").checked, allow_duet: $(".duet").checked, allow_stitch: $(".stitch").checked,
+        brand_organic_toggle: $(".cc").checked && $(".yours").checked, brand_content_toggle: $(".cc").checked && $(".branded").checked});
+      poll(card, r.publish_id);
+    } catch (e) { $(".result").textContent = "Not posted: " + e.message; $(".post").disabled = false; $(".skip").disabled = false; }
+  };
+}
+async function poll(card, id) {
+  const out = card.querySelector(".result");
+  for (let i = 0; i < 60; i++) {
+    const s = await api("/api/post_status?publish_id=" + encodeURIComponent(id));
+    if (s.status === "PUBLISH_COMPLETE") { out.innerHTML = s.url ? `Posted: <a href="${esc(s.url)}" target="_blank">${esc(s.url)}</a>` : "Posted. It will appear on your profile shortly."; return; }
+    if (s.status === "FAILED") { out.textContent = "TikTok could not post it: " + (s.fail_reason || "unknown reason"); return; }
+    out.textContent = "Processing on TikTok… (" + s.status + ")";
+    await new Promise(r => setTimeout(r, 5000));
+  }
+  out.textContent = "Still processing. It will appear on your profile when TikTok finishes.";
+}
+load();
+</script>
+</body></html>

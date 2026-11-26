@@ -3,24 +3,33 @@
 <title>Privacy Policy</title><link rel="stylesheet" href="style.css"></head>
 <body>
 <header><a class="brand" href="./">GTA Vice Hours Uploader</a>
-<nav><a href="privacy.html">Privacy Policy</a><a href="terms.html">Terms of Service</a></nav></header>
+<nav><a href="studio.html">TikTok studio</a><a href="privacy.html">Privacy Policy</a><a href="terms.html">Terms of Service</a></nav></header>
 <main>
 <h1>Privacy Policy</h1>
-<p class="muted">Last updated 23 November 2026</p>
+<p class="muted">Last updated 26 November 2026</p>
 
 <p>GTA Vice Hours Uploader (the "tool") is an in-house tool run by the owner of the YouTube channel
-<a href="https://www.youtube.com/@gtavicehours">GTA Vice Hours</a>. It uses YouTube API Services. This policy
-explains what the tool accesses through those services, and what it does with it.</p>
+<a href="https://www.youtube.com/@gtavicehours">GTA Vice Hours</a>, which also posts as
+<a href="https://www.tiktok.com/@gtavicehours">@gtavicehours on TikTok</a> and
+<a href="https://www.instagram.com/gtavicehours/">@gtavicehours on Instagram</a>. It uses YouTube API Services,
+TikTok's Login Kit and Content Posting API, and Instagram's API. This policy explains what the tool accesses
+through those services, and what it does with it.</p>
 
 <h2>YouTube API Services and Google's Privacy Policy</h2>
 <p>The tool uses YouTube API Services. By using the tool, you are also bound by the
 <a href="https://www.youtube.com/t/terms">YouTube Terms of Service</a>. How Google handles data is described in
 the <a href="http://www.google.com/policies/privacy">Google Privacy Policy</a>.</p>
 
+<h2>TikTok and Instagram</h2>
+<p>Use of TikTok through the tool is also subject to the <a href="https://www.tiktok.com/legal/terms-of-service">TikTok
+Terms of Service</a> and the <a href="https://www.tiktok.com/legal/privacy-policy">TikTok Privacy Policy</a>. Use of
+Instagram is subject to the <a href="https://help.instagram.com/581066165581870">Instagram Terms of Use</a> and the
+<a href="https://privacycenter.instagram.com/policy">Meta Privacy Policy</a>.</p>
+
 <h2>Whose data</h2>
-<p>The tool has one user: the channel's owner. It signs in with Google (OAuth 2.0) only to the GTA Vice Hours
-channel's own account. It does not let anyone else sign in, and it does not collect data about viewers or other
-YouTube users.</p>
+<p>The tool has one user: the channel's owner. It signs in (OAuth 2.0) only to the GTA Vice Hours accounts on
+Google, TikTok and Instagram. It does not let anyone else sign in, and it does not collect data about viewers or
+other users of those services.</p>
 
 <h2>What the tool accesses</h2>
 <ul>
@@ -29,14 +38,24 @@ with their title, description and tags.</li>
 <li><strong>Reading</strong> (scope <code>youtube.readonly</code>): it reads public statistics (view, like and
 comment counts) of the channel's own videos, and the channel's subscriber and video counts.</li>
 </ul>
-<p>It does not read comments, messages, viewer identities, watch history or any other channel's private data.</p>
+<p>On TikTok (Login Kit and Content Posting API):</p>
+<ul>
+<li><strong>Account basics</strong> (scope <code>user.info.basic</code>): the account's ID, display name and
+avatar, shown in the tool so the owner can see which account a post goes to.</li>
+<li><strong>Posting</strong> (scope <code>video.publish</code>): the account's posting options (privacy levels it
+allows, and whether comments, duets and stitches are allowed), and posting a video that the owner has reviewed,
+captioned and approved in the tool. Nothing is posted to TikTok without the owner's click.</li>
+</ul>
+<p>On Instagram: the account's username, and publishing the account's own Reels with their captions.</p>
+<p>It does not read comments, messages, followers, viewer identities, watch history or any other account's
+private data.</p>
 
 <h2>How the data is used, stored and shared</h2>
 <ul>
 <li>Video statistics are used only to judge which clips perform well, and to report views to the clipping
 campaigns that sponsor the clips. Those campaigns see the public video links and public view counts.</li>
-<li>Statistics are stored in a file on the owner's own computer and refreshed at most once an hour. The OAuth
-token is stored on that computer only. Neither is sold or shared with anyone else.</li>
+<li>Statistics are stored in a file on the owner's own computer and refreshed at most once an hour. OAuth
+tokens for each service are stored on that computer only. Nothing is sold or shared with anyone else.</li>
 <li>The tool uses no cookies or tracking, and serves no advertising.</li>
 </ul>
 
@@ -44,6 +63,8 @@ token is stored on that computer only. Neither is sold or shared with anyone els
 <p>Statistics held by the tool are replaced at each refresh. They are deleted within 30 days of the tool stopping
 use of YouTube API Services, or of access being revoked. Access can be revoked at any time on the Google security
 settings page: <a href="https://security.google.com/settings/security/permissions">https://security.google.com/settings/security/permissions</a>.
+TikTok access can be revoked in the TikTok app under Settings and privacy, Security, Apps and services
+permissions; Instagram access under Settings, Apps and websites.
 When access is revoked, the tool deletes its stored token and the statistics it holds.</p>
 
 <h2>Changes and contact</h2>
