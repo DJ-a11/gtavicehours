@@ -9,18 +9,17 @@
 <p id="msg" class="muted">Finishing sign-in…</p>
 </main>
 <script>
-(async () => {
+(() => {
   const q = new URLSearchParams(location.search), msg = document.getElementById("msg");
+  history.replaceState(null, "", location.pathname);       // the code is single-use; keep it out of history
   if (q.get("error")) { msg.textContent = "TikTok sign-in was cancelled or failed: " + (q.get("error_description") || q.get("error")); return; }
-  try {
-    const r = await fetch("http://127.0.0.1:8765/api/callback", {method: "POST", headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({code: q.get("code"), state: q.get("state")})});
-    const j = await r.json();
-    if (!r.ok) throw new Error(j.error || r.statusText);
-    history.replaceState(null, "", location.pathname);       // the code is single-use; keep it out of history
-    msg.textContent = "Connected as " + (j.display_name || "your TikTok account") + ". Opening the studio…";
-    setTimeout(() => location.href = "studio.html", 1200);
-  } catch (e) { msg.textContent = "Could not finish sign-in: " + e.message + ". Is the GTA Vice Hours tool running?"; }
+  if (window.opener && !window.opener.closed) {             // hand the code to the studio, which passes it to the tool
+    window.opener.postMessage({tiktok_code: q.get("code"), state: q.get("state")}, location.origin);
+    msg.textContent = "Signed in. You can close this window.";
+    setTimeout(() => window.close(), 800);
+  } else {
+    msg.textContent = "Open the TikTok studio and sign in from there.";
+  }
 })();
 </script>
 </body></html>

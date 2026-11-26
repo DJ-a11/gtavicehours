@@ -31,18 +31,52 @@ const LOCAL = "http://127.0.0.1:8765";
 const PRIV = {PUBLIC_TO_EVERYONE: "Everyone", MUTUAL_FOLLOW_FRIENDS: "Friends", FOLLOWER_OF_CREATOR: "Followers", SELF_ONLY: "Only me"};
 const app = document.getElementById("app");
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-async function api(path, body) {
-  const r = await fetch(LOCAL + path, body ? {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(body)} : {});
-  const j = await r.json(); if (!r.ok) throw new Error(j.error || r.statusText); return j;
+// Chrome does not let a web page call this computer directly, so the tool opens a small window of its own (the
+// bridge) and this page talks to it with postMessage. The bridge answers only this site.
+let bridge = null, ready = null, readyNow = null, seq = 0;
+const pending = {};
+window.addEventListener("message", e => {
+  if (e.origin === LOCAL) {
+    const d = e.data || {};
+    if (d.bridge === "ready") { readyNow && readyNow(); return; }
+    if (pending[d.id]) { pending[d.id](d); delete pending[d.id]; }
+  } else if (e.origin === location.origin && e.data && e.data.tiktok_code) {
+    api("/api/callback", {code: e.data.tiktok_code, state: e.data.state}).then(load)
+      .catch(err => app.insertAdjacentHTML("afterbegin", `<p class="warn">TikTok sign-in failed: ${esc(err.message)}</p>`));
+  }
+});
+function connect() {
+  ready = new Promise(r => readyNow = r);
+  bridge = window.open(LOCAL + "/bridge", "vhbridge", "width=440,height=240");
+  return Promise.race([ready, new Promise((_, no) => setTimeout(() => no(new Error("no answer")), 8000))]);
+}
+function api(path, body, binary) {
+  return new Promise((res, rej) => {
+    if (!bridge || bridge.closed) return rej(new Error("not connected to the tool"));
+    const id = ++seq;
+    pending[id] = d => d.ok ? res(d.data) : rej(new Error(d.error || (d.data && d.data.error) || "failed"));
+    bridge.postMessage({id, path, body, binary}, LOCAL);
+  });
+}
+function start() {
+  app.innerHTML = `<p>Connect this page to the GTA Vice Hours tool on this computer. A small window opens; keep it open.</p>
+    <button class="btn" id="connect">Connect to the tool</button>`;
+  document.getElementById("connect").onclick = async () => {
+    try { await connect(); load(); }
+    catch (e) { app.innerHTML = `<p class="warn">The GTA Vice Hours tool is not running on this computer, so there is nothing to post.</p>`; }
+  };
 }
 async function load() {
   let s;
   try { s = await api("/api/status"); }
-  catch (e) { app.innerHTML = `<p class="warn">The GTA Vice Hours tool is not running on this computer, so there is nothing to post.</p>`; return; }
+  catch (e) { return start(); }
   if (!s.connected) {
     app.innerHTML = `<p>Sign in with the TikTok account the clips should be posted to.</p>
       <button class="btn" id="login">Continue with TikTok</button>`;
-    document.getElementById("login").onclick = async () => { location.href = (await api("/api/auth_url")).url; };
+    document.getElementById("login").onclick = async () => {
+      const w = window.open("about:blank", "tiktokauth", "width=520,height=760");
+      w.location = (await api("/api/auth_url")).url;
+    };
     return;
   }
   const c = s.creator;
@@ -54,7 +88,7 @@ async function load() {
   for (const q of s.queue) {
     const tooLong = c.max_video_post_duration_sec && q.duration > c.max_video_post_duration_sec;
     h += `<div class="card" data-id="${esc(q.id)}">
-      <video src="${LOCAL}/clip/${encodeURIComponent(q.id)}.mp4" controls playsinline preload="metadata"></video>
+      <video data-clip="${esc(q.id)}" controls playsinline></video>
       <div>
         <label>Caption</label><textarea maxlength="2200" class="cap">${esc(q.caption)}</textarea>
         <label>Who can view this video</label>
@@ -83,6 +117,10 @@ async function load() {
   app.innerHTML = h;
   document.getElementById("logout").onclick = async () => { await api("/api/logout", {}); load(); };
   document.querySelectorAll(".card").forEach(card => wire(card, c));
+  for (const v of document.querySelectorAll("video[data-clip]")) {        // the preview, fetched through the bridge
+    api("/clip/" + encodeURIComponent(v.dataset.clip) + ".mp4", null, true)
+      .then(buf => v.src = URL.createObjectURL(new Blob([buf], {type: "video/mp4"}))).catch(() => {});
+  }
 }
 function wire(card, c) {
   const $ = s => card.querySelector(s);
@@ -125,6 +163,6 @@ async function poll(card, id) {
   }
   out.textContent = "Still processing. It will appear on your profile when TikTok finishes.";
 }
-load();
+start();
 </script>
 </body></html>
