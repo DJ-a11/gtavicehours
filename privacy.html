@@ -6,7 +6,7 @@
 <nav><a href="studio.html">TikTok studio</a><a href="privacy.html">Privacy Policy</a><a href="terms.html">Terms of Service</a></nav></header>
 <main>
 <h1>Privacy Policy</h1>
-<p class="muted">Last updated 26 November 2026</p>
+<p class="muted">Last updated 27 November 2026</p>
 
 <p>GTA Vice Hours Uploader (the "tool") is an in-house tool run by the owner of the YouTube channel
 <a href="https://www.youtube.com/@gtavicehours">GTA Vice Hours</a>, which also posts as
@@ -37,6 +37,9 @@ other users of those services.</p>
 with their title, description and tags.</li>
 <li><strong>Reading</strong> (scope <code>youtube.readonly</code>): it reads public statistics (view, like and
 comment counts) of the channel's own videos, and the channel's subscriber and video counts.</li>
+<li><strong>Analytics</strong> (scope <code>yt-analytics.readonly</code>): for the channel's own videos only, the
+average view duration, the average percentage of each video watched, and views by country, as totals. These
+are aggregate figures: they identify no viewer.</li>
 </ul>
 <p>On TikTok (Login Kit and Content Posting API):</p>
 <ul>
@@ -47,14 +50,15 @@ allows, and whether comments, duets and stitches are allowed), and posting a vid
 captioned and approved in the tool. Nothing is posted to TikTok without the owner's click.</li>
 </ul>
 <p>On Instagram: the account's username, and publishing the account's own Reels with their captions.</p>
-<p>It does not read comments, messages, followers, viewer identities, watch history or any other account's
+<p>It does not read comments, messages, followers, viewer identities, watch history, data about individual viewers or any other account's
 private data.</p>
 
 <h2>How the data is used, stored and shared</h2>
 <ul>
-<li>Video statistics are used only to judge which clips perform well, and to report views to the clipping
-campaigns that sponsor the clips. Those campaigns see the public video links and public view counts.</li>
-<li>Statistics are stored in a file on the owner's own computer and refreshed at most once an hour. OAuth
+<li>Video statistics and analytics are used only to judge which clips perform well, and to report views to the
+clipping campaigns that sponsor the clips. Those campaigns see the public video links and public view counts;
+when a campaign requires it, the owner may show it a video's audience by country.</li>
+<li>Statistics are stored in a file on the owner's own computer and refreshed at most once an hour (analytics at most every six hours). OAuth
 tokens for each service are stored on that computer only. Nothing is sold or shared with anyone else.</li>
 <li>The tool uses no cookies or tracking, and serves no advertising.</li>
 </ul>
